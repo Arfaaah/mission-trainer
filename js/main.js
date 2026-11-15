@@ -1,7 +1,10 @@
 // main.js
 // Screen switching and event wiring. Connects buttons to game.js and ui.js.
 
-import { getSite, newGame, startDay, emptyPlan, runDay, isValidPlan, powerToday, carryOverPlan } from './game.js';
+import {
+  getSite, newGame, startDay, emptyPlan, runDay, isValidPlan, powerToday, carryOverPlan,
+  missionResults, saveBadges,
+} from './game.js';
 import { showScreen, renderBase, showReport, renderResults, renderSunPanel, renderChooseBase, renderBriefing } from './ui.js';
 import { SITES } from './config.js';
 import { loadSun, archivedSun } from './data/donki.js';
@@ -90,7 +93,9 @@ $('report').addEventListener('close', () => {
   if (state.status === 'playing') {
     beginDay();
   } else {
-    renderResults(state);
+    const results = missionResults(state);
+    const saved = saveBadges(results.badges); // remembered in this browser only
+    renderResults(state, results, saved);
     showScreen('screen-results');
   }
 });

@@ -1,8 +1,8 @@
 // ui.js
 // All rendering. No game rules here: numbers come from game.js.
 
-import { RULES, SYSTEMS, SITES } from './config.js';
-import { getSite, powerToday, powerUsed, resolveDay, morningEvent } from './game.js';
+import { RULES, SYSTEMS, SITES, BADGES } from './config.js';
+import { getSite, powerToday, powerUsed, resolveDay, morningEvent, forecastWarnings } from './game.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -180,6 +180,23 @@ export function renderBase(state, plan, focusSelector) {
     : '✅ All power is in use.';
   $('waste-warning').className = left > 0 ? 'warning' : 'ok';
 
+  // Warnings when the forecast shows air or food going down.
+  const warnings = forecastWarnings(state.meters, after, details);
+  const hungry = warnings.some((w) => w.meter === 'hungry');
+  const day = site.dayName.toLowerCase();
+  const names = { air: 'Air', food: 'Food' };
+  $('forecast-warnings').innerHTML = warnings
+    .filter((w) => !(hungry && w.meter === 'food')) // the hungry warning says it better
+    .map((w) => {
+      if (w.meter === 'hungry') {
+        return `<p class="forecast-warning">⚠️ Not enough food this ${day}! The crew will go hungry and lose ${RULES.hungerDamage} health.</p>`;
+      }
+      const when = w.daysLeft === 1
+        ? `it runs out at the end of this ${day}!`
+        : `it runs out in ${w.daysLeft} ${day}s.`;
+      return `<p class="forecast-warning">⚠️ ${names[w.meter]} is going down! At this rate ${when}</p>`;
+    }).join('');
+
   if (focusSelector) {
     const btn = document.querySelector(focusSelector);
     if (btn) btn.focus();
@@ -222,7 +239,42 @@ export function showReport(report, state) {
   $('report-next').focus();
 }
 
-export function renderResults(state) {
+function starsHtml(stars, site) {
+  const day = site.dayName.toLowerCase();
+  const meaning = [
+    `No stars this time. Finish all ${RULES.days} ${day}s to earn your first star.`,
+    `You survived! Make ${RULES.scienceForTwoStars} science for 2 stars.`,
+    `You survived and made ${RULES.scienceForTwoStars}+ science. Reach ${RULES.scienceGoal} for 3 stars.`,
+    `You survived and reached ${RULES.scienceGoal} science. Top marks!`,
+  ][stars];
+  return `
+    <div class="card stars-card">
+      <p class="stars" role="img" aria-label="${stars} of 3 stars">${'⭐'.repeat(stars)}${'☆'.repeat(3 - stars)}</p>
+      <p><strong>${stars} of 3 stars.</strong> ${meaning}</p>
+    </div>`;
+}
+
+function badgesHtml(earnedNow, saved) {
+  const newOnes = BADGES.filter((b) => saved.newOnes.includes(b.id));
+  const newHtml = newOnes.length
+    ? `<p class="new-badges">🎉 New badge${newOnes.length > 1 ? 's' : ''}: ${newOnes.map((b) => `${b.emoji} <strong>${b.name}</strong>`).join(', ')}!</p>`
+    : (earnedNow.length ? '<p>You earned badges you already had. Can you find a new one?</p>' : '');
+  const items = BADGES.map((b) => {
+    const have = saved.all.includes(b.id);
+    return `<li class="badge ${have ? 'badge-have' : 'badge-locked'}">
+      <span class="badge-icon" aria-hidden="true">${have ? b.emoji : '🔒'}</span>
+      <span><strong>${b.name}</strong> ${have ? '✓ Earned' : '(not yet)'}<br><span class="badge-how">${b.how}</span></span>
+    </li>`;
+  }).join('');
+  return `
+    <h3>Badges</h3>
+    ${newHtml}
+    <ul class="badge-list">${items}</ul>
+    <p class="data-source">Badges are saved only in this browser. Nothing is sent anywhere.</p>`;
+}
+
+// results = missionResults(state) from game.js; saved = saveBadges(...) result.
+export function renderResults(state, results, saved) {
   const site = getSite(state);
   const m = state.meters;
   const daysDone = state.history.length;
@@ -243,9 +295,13 @@ export function renderResults(state) {
   $('results-title').textContent = headline;
   $('results-body').innerHTML = `
     <p>${message}</p>
+    ${starsHtml(results.stars, site)}
     <div class="meters">${METERS.map((mt) => meterHtml(mt, m[mt.key])).join('')}</div>
     <p>Science: <strong>${m.science}</strong> of ${RULES.scienceGoal} goal.</p>
-    <p>${site.dayName}s completed: <strong>${daysDone}</strong> of ${RULES.days}.</p>`;
+    <p>${site.dayName}s completed: <strong>${daysDone}</strong> of ${RULES.days}.</p>
+    <h3>💡 Tips for next time</h3>
+    <ul class="tips">${results.tips.map((t) => `<li>${t}</li>`).join('')}</ul>
+    ${badgesHtml(results.badges, saved)}`;
 
   const other = SITES[site.id === 'moon' ? 'mars' : 'moon'];
   $('btn-other-base').textContent = `Try the other base: ${other.emoji} ${other.name}`;

@@ -59,7 +59,7 @@ Keep game rules out of ui.js and DOM code out of game.js so the rules can be tes
 | Crew health | 100 | radiation that gets through, no food (minus 8) | Rest day action (Commander mode only) |
 | Science | 0 | nothing | Science lab power (3 per unit), experiment cards |
 
-All meters run 0 to 100. Science goal is 40. Air at 0 or health at 0 ends the mission early.
+All meters run 0 to 100. Science goal is 70. Air at 0 or health at 0 ends the mission early.
 
 ### 4.3 The daily loop
 
@@ -96,8 +96,8 @@ If no flare has happened by day 6, force one so every player meets the core less
 
 ### 4.6 Scoring and replay
 
-- 3 stars: survive 10 days and reach 40 science. 2 stars: survive and reach 24. 1 star: survive.
-- Badges (saved in localStorage, wrapped in try/catch): Flare Survivor, Green Thumb (never ran out of food), Mars Commander, Moon Commander, Perfect Shield (no radiation got through for a whole mission), Scientist (60+ science).
+- 3 stars: survive 10 days and reach 70 science. 2 stars: survive and reach 45. 1 star: survive.
+- Badges (saved in localStorage, wrapped in try/catch). Every badge needs a finished mission (all 10 days): Flare Survivor (the shield fully blocked at least one solar flare: no radiation got through that day), Green Thumb (never ran out of food), Mars Commander, Moon Commander, Perfect Shield (no radiation got through for a whole mission), Scientist (100 science).
 - Failure is never scary: "The crew flew home safely. Real missions run into trouble too. What would you change?"
 - Results screen gives 1 to 3 specific tips based on what went wrong.
 

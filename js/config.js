@@ -38,7 +38,9 @@ export const RULES = {
 
   // Science
   sciencePerLabUnit: 3,      // each power unit in the Science lab makes 3 science
-  scienceGoal: 40,
+  scienceGoal: 70,           // survive + this much science = 3 stars
+  scienceForTwoStars: 45,    // survive + this much science = 2 stars (just surviving = 1 star)
+  scienceForBadge: 100,      // Scientist badge (the top of the meter)
 
   // Radiation
   shieldBlockPerUnit: 5,     // each power unit in the shield blocks 5 radiation
@@ -62,6 +64,18 @@ export const STARTING_PLAN = { lifeSupport: 3, greenhouse: 2, shield: 1, science
 // If today has less power than yesterday's plan, take power away
 // from systems in this order until the plan fits.
 export const POWER_CUT_ORDER = ['science', 'shield', 'greenhouse', 'lifeSupport'];
+
+// Badges (section 4.6 of CLAUDE.md). All badges are earned by finishing a
+// whole mission. They are saved in this browser only (localStorage).
+export const BADGES = [
+  { id: 'flareSurvivor', emoji: '☀️', name: 'Flare Survivor', how: 'Finish a mission where your shield blocked a whole solar flare: no radiation got through that day.' },
+  { id: 'greenThumb', emoji: '🌱', name: 'Green Thumb', how: 'Finish a mission without ever running out of food.' },
+  { id: 'marsCommander', emoji: '🔴', name: 'Mars Commander', how: 'Finish a mission on Mars.' },
+  { id: 'moonCommander', emoji: '🌙', name: 'Moon Commander', how: 'Finish a mission on the Moon.' },
+  { id: 'perfectShield', emoji: '🛡️', name: 'Perfect Shield', how: 'Finish a mission where no radiation got through your shield.' },
+  { id: 'scientist', emoji: '🔬', name: 'Scientist', how: `Finish a mission with ${RULES.scienceForBadge} science, the top of the meter.` },
+];
+export const BADGE_STORAGE_KEY = 'junior-astronaut-badges';
 
 // The two bases (section 4.4 of CLAUDE.md).
 export const SITES = {
