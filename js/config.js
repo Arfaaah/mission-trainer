@@ -2,10 +2,10 @@
 // Every number that controls the game lives here, so you can tune the game
 // without hunting through the code.
 
-// NASA API key for live DONKI data. DEMO_KEY is only for building the game:
-// it allows very few calls per hour. Swap in a free key from
-// https://api.nasa.gov before the final version.
-export const NASA_API_KEY = 'DEMO_KEY';
+// NASA API key for live DONKI data (used only if CCMC does not answer).
+// A free personal key from https://api.nasa.gov. It is fine to ship in a
+// static site because it is free and rate limited (section 5.5 of CLAUDE.md).
+export const NASA_API_KEY = 'pgcmQ7JHpKMKgbgDH8BD8KkJdqqN9bMqbKKTqJqt';
 
 // DONKI solar flare list (section 5.1 of CLAUDE.md).
 // The game tries these in order. The first one that answers is used.
