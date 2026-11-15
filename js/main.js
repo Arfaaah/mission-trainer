@@ -82,7 +82,18 @@ $('systems').addEventListener('click', (e) => {
   changePower(btn.dataset.system, Number(btn.dataset.change));
 });
 
+// Base screen: turn today's experiment on or off
+$('experiment').addEventListener('click', (e) => {
+  if (!e.target.closest('#btn-experiment')) return;
+  const next = { ...plan, experiment: plan.experiment ? null : state.todayExperiment };
+  const available = powerToday(getSite(state), state.todayEvent);
+  if (!isValidPlan(next, available)) return; // not enough power: ignore the press
+  plan = next;
+  renderBase(state, plan, '#btn-experiment');
+});
+
 $('btn-run').addEventListener('click', () => {
+  if (!state || state.status !== 'playing' || $('report').open) return; // ignore extra presses
   const report = runDay(state, plan);
   showReport(report, state);
 });

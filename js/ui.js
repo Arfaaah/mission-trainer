@@ -3,6 +3,7 @@
 
 import { RULES, SYSTEMS, SITES, BADGES } from './config.js';
 import { getSite, powerToday, powerUsed, resolveDay, morningEvent, forecastWarnings } from './game.js';
+import { ISS_RADIATION } from './data/archive.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -105,14 +106,15 @@ function effectText(key, plan, event, site, d) {
   switch (key) {
     case 'lifeSupport':
       return `Makes ${d.airMade} air. Crew breathes ${RULES.airBreathedPerDay}.` +
-        (event.airLost ? ` The leak loses ${event.airLost} more.` : '');
+        (event.airLost ? ` The leak loses ${event.airLost} more.` : '') +
+        (d.experimentAir ? ` The experiment uses ${d.experimentAir} more.` : '');
     case 'greenhouse':
       return `Grows ${n * RULES.foodPerGreenhouseUnit} food. Crew eats ${RULES.foodEatenPerDay}.` +
         (event.extraFood ? ` Harvest adds ${event.extraFood}.` : '');
     case 'shield':
       return `Blocks ${n * RULES.shieldBlockPerUnit} radiation. ${d.radiationIn} radiation is coming today.`;
     case 'science':
-      return `Makes ${d.scienceMade} science.` +
+      return `Makes ${d.labScience} science.` +
         (event.scienceMultiplier > 1 ? ' Counts double today!' : '') +
         ` Goal: ${RULES.scienceGoal}.`;
     default:
@@ -175,6 +177,8 @@ export function renderBase(state, plan, focusSelector) {
       </div>`;
   }).join('');
 
+  $('experiment').innerHTML = experimentHtml(state.todayExperiment, plan, left);
+
   $('waste-warning').textContent = left > 0
     ? `⚠️ ${left} power is not used. Unused power is wasted. It cannot be saved for tomorrow.`
     : '✅ All power is in use.';
@@ -216,8 +220,12 @@ export function showReport(report, state) {
     `💨 Air: made ${d.airMade}, used ${d.airLost}.`,
     `🥕 Food: grew ${d.foodMade}, crew ate ${d.foodEaten}.${d.hungry ? ` Not enough food! Crew lost ${RULES.hungerDamage} health.` : ''}`,
     `☢️ Radiation: ${d.radiationIn} came in, shield blocked ${d.radiationBlocked}, ${d.radiationThrough} got through.`,
-    `🔬 Science: made ${d.scienceMade}.`,
+    `🔬 Science: made ${d.scienceMade}.${d.experimentScience ? ` (The lab made ${d.labScience} and the experiment made ${d.experimentScience}.)` : ''}`,
   ];
+  if (report.plan.experiment) {
+    const ex = report.plan.experiment;
+    lines.push(`🧪 Experiment: ${esc(ex.title)}. Cost ${costText(ex)}, gave ${ex.science} science.`);
+  }
   if (d.powerWasted > 0) lines.push(`⚡ ${d.powerWasted} power was wasted.`);
 
   const isOver = state.status !== 'playing';
@@ -232,6 +240,7 @@ export function showReport(report, state) {
     </table>
     <ul class="report-lines">${lines.map((l) => `<li>${l}</li>`).join('')}</ul>
     <p class="why"><strong>Why?</strong> ${esc(report.why)}</p>
+    ${report.fact ? factCardHtml(report.fact) : ''}
     ${report.messageDelay.minutes !== null ? `<p class="delay-note">📡 Your report reached Earth in ${report.messageDelay.text}.</p>` : ''}`;
   $('report-next').textContent = isOver ? 'See mission results' : `Start ${report.dayName} ${report.day + 1}`;
 
@@ -301,6 +310,9 @@ export function renderResults(state, results, saved) {
     <p>${site.dayName}s completed: <strong>${daysDone}</strong> of ${RULES.days}.</p>
     <h3>💡 Tips for next time</h3>
     <ul class="tips">${results.tips.map((t) => `<li>${t}</li>`).join('')}</ul>
+    ${radiationCompareHtml(results.radiation, site)}
+    <h3>🔭 Real space science</h3>
+    ${results.facts.map((f) => factCardHtml(f, false)).join('')}
     ${badgesHtml(results.badges, saved)}`;
 
   const other = SITES[site.id === 'moon' ? 'mars' : 'moon'];
@@ -333,4 +345,64 @@ export function renderBriefing(site) {
     <p>Each ${site.dayName.toLowerCase()} you get a little power. Split it between air, food, the radiation shield and science.</p>
     <p>${last}</p>`;
   $('base-name').value = `${site.name} Base One`;
+}
+
+// ---------- Experiment cards and fact cards (step 5) ----------
+
+function costText(ex) {
+  const parts = [];
+  if (ex.powerCost) parts.push(`${ex.powerCost} power`);
+  if (ex.airCost) parts.push(`${ex.airCost} air`);
+  return parts.join(' and ') || 'nothing';
+}
+
+// A link that opens in a new tab, so the game stays open.
+function sourceLink(url, text) {
+  return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(text)}</a>`;
+}
+
+// Today's optional experiment card on the base screen.
+function experimentHtml(card, plan, left) {
+  if (!card) return '';
+  const on = Boolean(plan.experiment);
+  const canRun = on || left >= card.powerCost;
+  const s = card.studyInfo;
+  return `
+    <p class="panel-title">🧪 Today's experiment (you can skip it)</p>
+    <p class="news-title">${card.emoji} ${esc(card.title)}</p>
+    <p>${esc(card.what)}</p>
+    <p>Costs <strong>${costText(card)}</strong>. Gives <strong>+${card.science} science</strong>.</p>
+    <p class="data-source">${tagHtml('ARCHIVED')} Based on a real NASA study: ${esc(s.kid)} Source: ${sourceLink(s.url, s.source)}.</p>
+    <button type="button" id="btn-experiment" class="${on ? 'exp-on' : ''}" aria-pressed="${on}" aria-disabled="${!canRun}">
+      ${on ? '✅ Experiment is on (press to cancel)' : '🧪 Run this experiment'}
+    </button>
+    ${!canRun ? `<p class="warning">Not enough power left. Take ${card.powerCost - left} power from a system first.</p>` : ''}`;
+}
+
+// A "Real space science" fact card, with its ARCHIVED tag and source.
+function factCardHtml(fact, withTitle = true) {
+  return `
+    <div class="fact-card">
+      ${withTitle ? '<p class="fact-title">🔭 Real space science</p>' : ''}
+      <p>${esc(fact.text)}</p>
+      <p class="data-source">${tagHtml('ARCHIVED')} Source: ${sourceLink(fact.url, fact.source)}</p>
+    </div>`;
+}
+
+// Results screen: the player's radiation next to a real ISS daily dose.
+function radiationCompareHtml(r, site) {
+  const iss = ISS_RADIATION;
+  const day = site.dayName.toLowerCase();
+  return `
+    <h3>☢️ Your crew and real astronauts</h3>
+    <div class="card">
+      <p>In your mission, <strong>${r.reached}</strong> radiation points reached your base in ${r.days} ${day}${r.days === 1 ? '' : 's'}.
+        Your shield blocked <strong>${r.blocked}</strong>, and <strong>${r.through}</strong> got through to the crew
+        (about ${r.throughPerDay} each ${day}).</p>
+      <p>Real astronauts get radiation every day too. Inside the space station, a detector called ${iss.instrument}
+        measured about <strong>${iss.averagePerDay} microgray</strong> each day (1 to 7 June 2024).
+        A microgray is a tiny unit scientists use to measure how much radiation energy something soaks up.</p>
+      <p class="data-source">Radiation points are made up for this game, so they are not the same as microgray.
+        ${tagHtml('ARCHIVED')} Source: ${sourceLink(iss.sourceUrl, iss.source)}, ${iss.instrument}, ISS ${iss.module} module, 1 to 7 June 2024.</p>
+    </div>`;
 }

@@ -86,7 +86,7 @@ test('a full 10 day mission with a sensible plan is won', () => {
 
 test('day 1 starts with life support 3, greenhouse 2, shield 1, science 0', () => {
   assert.deepEqual(carryOverPlan(null, 10),
-    { lifeSupport: 3, greenhouse: 2, shield: 1, science: 0 });
+    { lifeSupport: 3, greenhouse: 2, shield: 1, science: 0, experiment: null });
 });
 
 test('yesterday\'s plan is kept when it fits', () => {
@@ -98,8 +98,8 @@ test('less power cuts science, then shield, then food, then life support', () =>
   const p = plan({ lifeSupport: 3, greenhouse: 2, shield: 2, science: 3 }); // uses 10
   // 6 power: science 3 -> 0, shield 2 -> 1
   assert.deepEqual(carryOverPlan(p, 6),
-    { lifeSupport: 3, greenhouse: 2, shield: 1, science: 0 });
+    { lifeSupport: 3, greenhouse: 2, shield: 1, science: 0, experiment: null });
   // 2 power: science, shield and greenhouse all gone, life support 3 -> 2
   assert.deepEqual(carryOverPlan(p, 2),
-    { lifeSupport: 2, greenhouse: 0, shield: 0, science: 0 });
+    { lifeSupport: 2, greenhouse: 0, shield: 0, science: 0, experiment: null });
 });

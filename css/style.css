@@ -229,6 +229,28 @@ button.big.secondary {
 .badge-icon { font-size: 1.8rem; }
 .badge-how { font-size: 0.85rem; color: var(--muted); }
 
+/* Experiment card (base screen) */
+.experiment { border-color: var(--science); }
+.experiment button { margin-top: 6px; }
+button.exp-on {
+  background: var(--science);
+  border-color: var(--science);
+  color: var(--accent-text);
+  font-weight: bold;
+}
+
+/* Fact cards (day report and results) */
+.fact-card {
+  background: #12204a;
+  border: 2px solid var(--air);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+.fact-card p { margin: 0.3em 0; }
+.fact-title { font-weight: bold; color: var(--air); }
+.data-source a { color: var(--air); }
+
 /* LIVE / ARCHIVED data tags */
 .tag {
   display: inline-block;

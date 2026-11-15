@@ -134,7 +134,7 @@ If no flare has happened by day 6, force one so every player meets the core less
 
 ### 5.4 Other sources to cite in fact cards
 
-- Curiosity RAD: about 0.64 mSv per day on the Mars surface.
+- Curiosity RAD: about 0.67 mSv per day on the Mars surface (average from August 2012 to June 2013). Source: NASA news release, 9 December 2013, https://www.nasa.gov/news-release/nasa-rover-results-include-first-age-measurement-on-mars-and-help-for-human-exploration/
 - NASA Veggie experiment: astronauts grew and ate lettuce on the ISS.
 - Opportunity rover: lost power in the 2018 Mars dust storm.
 - CSA food production toolkit for greenhouse content.

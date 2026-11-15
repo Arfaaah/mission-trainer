@@ -77,6 +77,30 @@ export const BADGES = [
 ];
 export const BADGE_STORAGE_KEY = 'junior-astronaut-badges';
 
+// Experiment cards (section 4.3 step 3 of CLAUDE.md). One is offered each day.
+// Running one costs power (or air) and gives bonus science. Each is based on a
+// real NASA study in data/archive.js (OSDR_STUDIES). "sites" limits a card to
+// one base. The Science lab makes 3 science per power, so experiments give a
+// little more (about 4 per power) to make them worth trying.
+export const EXPERIMENTS = [
+  { id: 'lettuce-check', study: 'OSD-267', emoji: '🥬', title: 'Check the space lettuce',
+    what: 'Test leaves from the greenhouse to make sure they are safe to eat.', powerCost: 1, airCost: 0, science: 4 },
+  { id: 'tomato-light', study: 'OSD-767', emoji: '🍅', title: 'Grow tomatoes under red and blue light',
+    what: 'Shine different colours of light on tomato plants and see how they change.', powerCost: 2, airCost: 0, science: 8 },
+  { id: 'chile-peppers', study: 'OSD-772', emoji: '🌶️', title: 'Grow chile peppers',
+    what: 'Peppers need bright light for a long time, so this uses a lot of power.', powerCost: 3, airCost: 0, science: 12 },
+  { id: 'moon-soil', study: 'OSD-476', emoji: '🪴', title: 'Plant seeds in Moon soil',
+    what: 'Can plants grow in the dusty Moon ground outside your base?', powerCost: 2, airCost: 0, science: 9, sites: ['moon'] },
+  { id: 'gravity-spin', study: 'OSD-714', emoji: '🌀', title: 'Spin test for muscles',
+    what: 'Spin a small machine to make gravity, and test how gravity keeps muscles strong.', powerCost: 2, airCost: 0, science: 8 },
+  { id: 'muscle-chip', study: 'OSD-937', emoji: '🔋', title: 'Muscle on a chip',
+    what: 'Give tiny muscle samples small electric pulses and watch how strongly they squeeze.', powerCost: 1, airCost: 0, science: 5 },
+  { id: 'fitness-test', study: 'OSD-342', emoji: '🏃', title: 'Crew fitness test',
+    what: 'The crew exercises hard to check their muscles and bones. Hard work means heavy breathing, so this uses air, not power.', powerCost: 0, airCost: 6, science: 6 },
+  { id: 'space-seeds', study: 'OSD-210', emoji: '🌰', title: 'Seeds and cosmic rays',
+    what: 'Leave seeds by the outer wall, then check them for radiation damage.', powerCost: 2, airCost: 0, science: 8 },
+];
+
 // The two bases (section 4.4 of CLAUDE.md).
 export const SITES = {
   moon: {

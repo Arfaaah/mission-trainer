@@ -3,19 +3,21 @@
 // No DOM code here, so these rules can be tested in Node.
 
 import { RULES, SITES, SYSTEMS, STARTING_PLAN, POWER_CUT_ORDER, BADGES, BADGE_STORAGE_KEY } from './config.js';
-import { drawEvent, knownEvent } from './events.js';
+import { drawEvent, knownEvent, drawExperiment } from './events.js';
 import { archivedSun } from './data/donki.js';
+import { SCIENCE_FACTS } from './data/archive.js';
 
 const clamp = (n) => Math.max(0, Math.min(RULES.meterMax, n));
 
 export function emptyPlan() {
-  return { lifeSupport: 0, greenhouse: 0, shield: 0, science: 0 };
+  return { lifeSupport: 0, greenhouse: 0, shield: 0, science: 0, experiment: null };
 }
 
 // Start today with yesterday's plan (or the day 1 plan). If it needs more
 // power than today has, remove power in POWER_CUT_ORDER until it fits.
 export function carryOverPlan(previousPlan, available) {
-  const plan = { ...(previousPlan || STARTING_PLAN) };
+  // The experiment card is new each day, so it is never carried over.
+  const plan = { ...(previousPlan || STARTING_PLAN), experiment: null };
   for (const key of POWER_CUT_ORDER) {
     const extra = powerUsed(plan) - available;
     if (extra <= 0) break;
@@ -51,6 +53,8 @@ export function newGame(siteId = 'moon', baseName = 'Base', sun = archivedSun(),
     endReason: null,        // 'air' | 'health' | null
     flareCount: 0,
     todayEvent: null,
+    todayExperiment: null,  // today's experiment card (from data/archive.js studies)
+    factsShown: [],         // ids of fact cards already shown this mission
     history: [],            // one report per finished day
   };
 }
@@ -59,9 +63,11 @@ export function getSite(state) {
   return SITES[state.siteId];
 }
 
-// Draw the event for the current day. Call once at the start of each day.
+// Draw the event and the experiment card for the current day.
+// Call once at the start of each day.
 export function startDay(state, rng = Math.random) {
   state.todayEvent = drawEvent(state.day, state.flareCount, getSite(state), rng, state.sun);
+  state.todayExperiment = drawExperiment(getSite(state), rng);
   return state.todayEvent;
 }
 
@@ -74,8 +80,10 @@ export function powerToday(site, event) {
   return Math.max(0, site.dailyPower + event.powerChange);
 }
 
+// Power used by the four systems plus the experiment, if the player runs one.
 export function powerUsed(plan) {
-  return SYSTEMS.reduce((sum, key) => sum + plan[key], 0);
+  const systems = SYSTEMS.reduce((sum, key) => sum + plan[key], 0);
+  return systems + (plan.experiment ? plan.experiment.powerCost : 0);
 }
 
 // The heart of the game: work out what one day does to the meters.
@@ -87,7 +95,9 @@ export function resolveDay(meters, plan, event, site) {
 
   // Air
   const airMade = plan.lifeSupport * RULES.airPerLifeSupportUnit;
-  const airLost = RULES.airBreathedPerDay + event.airLost;
+  const experiment = plan.experiment || null;
+  const experimentAir = experiment ? experiment.airCost : 0;
+  const airLost = RULES.airBreathedPerDay + event.airLost + experimentAir;
   const air = clamp(meters.air + airMade - airLost);
 
   // Food
@@ -105,7 +115,10 @@ export function resolveDay(meters, plan, event, site) {
   const health = clamp(meters.health - radiationThrough - (hungry ? RULES.hungerDamage : 0));
 
   // Science
-  const scienceMade = plan.science * RULES.sciencePerLabUnit * event.scienceMultiplier;
+  // (A strange rock doubles the Science lab only, not the experiment.)
+  const labScience = plan.science * RULES.sciencePerLabUnit * event.scienceMultiplier;
+  const experimentScience = experiment ? experiment.science : 0;
+  const scienceMade = labScience + experimentScience;
   const science = clamp(meters.science + scienceMade);
 
   return {
@@ -117,7 +130,7 @@ export function resolveDay(meters, plan, event, site) {
       airMade, airLost,
       foodMade, foodEaten: RULES.foodEatenPerDay, hungry,
       radiationIn, radiationBlocked, radiationThrough,
-      scienceMade,
+      scienceMade, labScience, experimentScience, experimentAir,
     },
   };
 }
@@ -129,7 +142,7 @@ export function isValidPlan(plan, available) {
 }
 
 // Really run the day. Changes the state and returns a report for the popup.
-export function runDay(state, plan) {
+export function runDay(state, plan, rng = Math.random) {
   if (state.status !== 'playing') throw new Error('Mission is already over');
   const site = getSite(state);
   const event = state.todayEvent;
@@ -161,6 +174,7 @@ export function runDay(state, plan) {
     details,
     messageDelay: state.messageDelay,
     why: explainWhy(details, event, after),
+    fact: pickDayFact(state, event, rng),
   };
   state.history.push(report);
 
@@ -306,8 +320,14 @@ export function tipsFor(state) {
 }
 
 // Everything the results screen needs.
-export function missionResults(state) {
-  return { stars: starsFor(state), badges: earnedBadges(state), tips: tipsFor(state) };
+export function missionResults(state, rng = Math.random) {
+  return {
+    stars: starsFor(state),
+    badges: earnedBadges(state),
+    tips: tipsFor(state),
+    facts: resultFacts(state, rng),
+    radiation: missionRadiation(state),
+  };
 }
 
 // ---------- Saved badges (localStorage, wrapped in try/catch) ----------
@@ -336,4 +356,62 @@ export function saveBadges(earned, storage = globalThis.localStorage) {
     // Storage is blocked (for example private browsing). Keep playing.
   }
   return { all, newOnes };
+}
+
+// ---------- Fact cards (real science, from data/archive.js) ----------
+
+// Which fact tags fit what happened today, most fitting first.
+function tagsForDay(state, event) {
+  const tags = [];
+  if (event.hidden) tags.push('surprise');
+  if (event.flareClass && state.siteId === 'mars') tags.push('flare-mars');
+  if (event.flareClass) tags.push('flare');
+  if (event.id === 'lowPower' && state.siteId === 'mars') tags.push('lowPower-mars');
+  if (event.id === 'harvest') tags.push('harvest');
+  tags.push(state.siteId);
+  return tags;
+}
+
+// Pick one "Real space science" fact for today's report. It tries a fact that
+// fits today's event first, and never repeats a fact in the same mission
+// until they have all been shown.
+export function pickDayFact(state, event, rng = Math.random) {
+  let pool = SCIENCE_FACTS.filter((f) => !state.factsShown.includes(f.id));
+  if (pool.length === 0) {
+    state.factsShown = [];
+    pool = SCIENCE_FACTS;
+  }
+  let fact = null;
+  for (const tag of tagsForDay(state, event)) {
+    fact = pool.find((f) => f.tags.includes(tag));
+    if (fact) break;
+  }
+  if (!fact) fact = pool[Math.floor(rng() * pool.length)];
+  state.factsShown.push(fact.id);
+  return fact;
+}
+
+// Three fact cards for the results screen, preferring ones not seen yet.
+export function resultFacts(state, rng = Math.random) {
+  const unseen = SCIENCE_FACTS.filter((f) => !state.factsShown.includes(f.id));
+  const seen = SCIENCE_FACTS.filter((f) => state.factsShown.includes(f.id));
+  const shuffle = (list) => list
+    .map((f) => ({ f, k: rng() }))
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.f);
+  return [...shuffle(unseen), ...shuffle(seen)].slice(0, 3);
+}
+
+// Radiation totals for the results screen (game points, not real units).
+export function missionRadiation(state) {
+  const h = state.history;
+  const reached = h.reduce((s, r) => s + r.details.radiationIn, 0);
+  const through = h.reduce((s, r) => s + r.details.radiationThrough, 0);
+  return {
+    reached,
+    through,
+    blocked: reached - through,
+    days: h.length,
+    throughPerDay: h.length ? Math.round(through / h.length) : 0,
+  };
 }

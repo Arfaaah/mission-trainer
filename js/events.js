@@ -2,8 +2,16 @@
 // The event deck: what can happen each day, and how one is picked.
 // No DOM code here.
 
-import { RULES, FLARE_RADIATION } from './config.js';
-import { ARCHIVED_FLARES } from './data/archive.js';
+import { RULES, FLARE_RADIATION, EXPERIMENTS } from './config.js';
+import { ARCHIVED_FLARES, OSDR_STUDIES } from './data/archive.js';
+
+// Pick today's experiment card for this base. The card carries its real
+// NASA study (id, title, kid sentence, source link).
+export function drawExperiment(site, rng = Math.random) {
+  const deck = EXPERIMENTS.filter((e) => !e.sites || e.sites.includes(site.id));
+  const card = deck[Math.floor(rng() * deck.length)];
+  return { ...card, studyInfo: OSDR_STUDIES.find((s) => s.id === card.study) };
+}
 
 // Flare chance per day = 0.10 + 0.01 x M flares + 0.04 x X flares,
 // kept between 0.10 and 0.35.
