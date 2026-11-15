@@ -156,6 +156,44 @@ input[type="text"] {
   .stepper { justify-content: center; }
 }
 
+/* Choose your base cards (each card is one big button) */
+.base-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+@media (max-width: 600px) {
+  .base-cards { grid-template-columns: 1fr; }
+}
+.base-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  line-height: 1.35;
+}
+.base-card:hover { border-color: var(--accent); }
+.base-card-title { font-size: 1.4rem; font-weight: bold; }
+.base-card-place { color: var(--muted); font-size: 0.9rem; }
+
+button.big.secondary {
+  background: var(--panel);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.delay-note { font-size: 0.9rem; color: var(--muted); }
+.surprise {
+  background: #3a2410;
+  border: 2px solid var(--warn);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: bold;
+}
+
 /* LIVE / ARCHIVED data tags */
 .tag {
   display: inline-block;

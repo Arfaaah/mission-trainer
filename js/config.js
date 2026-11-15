@@ -63,31 +63,48 @@ export const STARTING_PLAN = { lifeSupport: 3, greenhouse: 2, shield: 1, science
 // from systems in this order until the plan fits.
 export const POWER_CUT_ORDER = ['science', 'shield', 'greenhouse', 'lifeSupport'];
 
+// The two bases (section 4.4 of CLAUDE.md).
 export const SITES = {
   moon: {
     id: 'moon',
     name: 'Moon',
-    place: 'Shackleton crater rim, south pole',
+    onPlace: 'on the Moon',
+    place: 'Shackleton crater rim, near the south pole',
     emoji: '🌙',
+    powerReason: 'Sunlight is strong on the crater rim.',
+    radiationReason: 'The Moon has no air to block radiation.',
     dailyPower: 10,
     baseRadiation: 6,
     dayName: 'Day',
+    dayLength: null,
+    // Messages from Earth take about 1.3 seconds. Warnings always arrive.
+    messageDelay: { minutes: null, text: 'about 1.3 seconds' },
+    lateWarningChance: 0,
     badPowerEvent: {
       title: 'Long shadows',
+      emoji: '🌑',
       news: 'The Sun is low and long shadows cover the solar panels. You get 4 less power today.',
     },
   },
-  // Mars is ready in the settings but is turned on in build step 3.
   mars: {
     id: 'mars',
     name: 'Mars',
+    onPlace: 'on Mars',
     place: 'Jezero crater',
     emoji: '🔴',
+    powerReason: 'Mars is farther from the Sun, so sunlight is weaker.',
+    radiationReason: 'Mars has thin air that blocks a little radiation.',
     dailyPower: 9,
     baseRadiation: 4,
     dayName: 'Sol',
+    dayLength: '24 h 39 min',
+    // Messages from Earth take 3 to 22 minutes, depending on where Earth and
+    // Mars are in their orbits. One delay is picked for each mission.
+    messageDelay: { minMinutes: 3, maxMinutes: 22 },
+    lateWarningChance: 0.5,   // half of flare warnings arrive too late
     badPowerEvent: {
       title: 'Dust storm',
+      emoji: '🌪️',
       news: 'A dust storm is blocking sunlight on the solar panels. You get 4 less power today.',
     },
   },

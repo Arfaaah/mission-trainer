@@ -18,6 +18,17 @@ export function flareRadiation(classType) {
   return FLARE_RADIATION[letter] ?? FLARE_RADIATION.C;
 }
 
+// What Mission Control says when it knows of nothing coming. A quiet day and
+// a surprise flare look exactly the same in the morning.
+const NO_WARNINGS_NEWS = 'No warnings received today.';
+
+// What the player sees in the morning. A surprise (hidden) event looks like a
+// day with no warnings, so the forecast cannot give the surprise away.
+export function knownEvent(event) {
+  if (!event.hidden) return event;
+  return { ...baseEvent(), title: 'No warnings received', emoji: '📭' };
+}
+
 // A blank event. Every event has all these fields so the game rules
 // never have to check whether one is missing.
 function baseEvent() {
@@ -25,7 +36,8 @@ function baseEvent() {
     id: 'quiet',
     emoji: '😌',
     title: 'Quiet day',
-    news: 'No warnings today. A good day to plan carefully.',
+    news: NO_WARNINGS_NEWS,
+    hidden: false,     // true = a surprise: the warning arrived too late
     powerChange: 0,
     extraRadiation: 0,
     extraFood: 0,
@@ -60,7 +72,7 @@ function makeBadPowerEvent(site) {
   return {
     ...baseEvent(),
     id: 'lowPower',
-    emoji: site.id === 'mars' ? '🌪️' : '🌑',
+    emoji: site.badPowerEvent.emoji,
     title: site.badPowerEvent.title,
     news: site.badPowerEvent.news,
     powerChange: -4,
@@ -125,16 +137,22 @@ export function drawEvent(day, flareCount, site, rng = Math.random, sun = null) 
 
   // Pick a real flare. If the live list is empty (a quiet Sun), use an archived one.
   const pool = sun && sun.flares.length > 0 ? sun.flares : ARCHIVED_WITH_TAGS;
-  const pickFlare = () => pool[Math.floor(rng() * pool.length)];
   const chance = sun ? sun.chance : RULES.flareChanceMin;
+
+  // Pick a flare, and on Mars decide if its warning arrives too late.
+  const flareEvent = () => {
+    const ev = makeFlareEvent(pool[Math.floor(rng() * pool.length)]);
+    if (site.lateWarningChance > 0 && rng() < site.lateWarningChance) ev.hidden = true;
+    return ev;
+  };
 
   // Make sure every player meets a flare.
   if (day >= RULES.forceFlareOnDay && flareCount === 0) {
-    return makeFlareEvent(pickFlare());
+    return flareEvent();
   }
 
   if (rng() < chance) {
-    return makeFlareEvent(pickFlare());
+    return flareEvent();
   }
   if (rng() < RULES.badPowerChance) {
     return makeBadPowerEvent(site);

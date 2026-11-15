@@ -2,12 +2,14 @@
 // Screen switching and event wiring. Connects buttons to game.js and ui.js.
 
 import { getSite, newGame, startDay, emptyPlan, runDay, isValidPlan, powerToday, carryOverPlan } from './game.js';
-import { showScreen, renderBase, showReport, renderResults, renderSunPanel } from './ui.js';
+import { showScreen, renderBase, showReport, renderResults, renderSunPanel, renderChooseBase, renderBriefing } from './ui.js';
+import { SITES } from './config.js';
 import { loadSun, archivedSun } from './data/donki.js';
 
 let state = null;
 let plan = emptyPlan();
 let sun = null; // solar flare data: LIVE from NASA, or ARCHIVED
+let siteId = 'moon'; // the base the player chose
 
 const $ = (id) => document.getElementById(id);
 
@@ -43,14 +45,30 @@ function changePower(system, change) {
   renderBase(state, plan, `[data-system="${system}"][data-change="${change}"]`);
 }
 
+function chooseBase(id) {
+  siteId = id;
+  renderBriefing(SITES[siteId]);
+  showScreen('screen-briefing');
+}
+
 // Title screen
-$('btn-play').addEventListener('click', () => showScreen('screen-briefing'));
+$('btn-play').addEventListener('click', () => {
+  renderChooseBase();
+  showScreen('screen-choose');
+});
+
+// Choose your base screen: one listener for both base cards
+$('base-cards').addEventListener('click', (e) => {
+  const card = e.target.closest('button[data-site]');
+  if (card) chooseBase(card.dataset.site);
+});
+$('btn-choose-back').addEventListener('click', () => showScreen('screen-title'));
 
 // Briefing screen
 $('briefing-form').addEventListener('submit', (e) => {
   e.preventDefault();
   // If NASA has not answered yet, play with archived flares.
-  state = newGame('moon', $('base-name').value, sun ?? archivedSun('NASA had not answered yet'));
+  state = newGame(siteId, $('base-name').value, sun ?? archivedSun('NASA had not answered yet'));
   beginDay();
 });
 
@@ -78,5 +96,6 @@ $('report').addEventListener('close', () => {
 });
 
 // Results screen
-$('btn-again').addEventListener('click', () => showScreen('screen-briefing'));
+$('btn-again').addEventListener('click', () => chooseBase(siteId));
+$('btn-other-base').addEventListener('click', (e) => chooseBase(e.currentTarget.dataset.site));
 $('btn-title').addEventListener('click', () => showScreen('screen-title'));

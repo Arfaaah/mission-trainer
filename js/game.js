@@ -3,7 +3,7 @@
 // No DOM code here, so these rules can be tested in Node.
 
 import { RULES, SITES, SYSTEMS, STARTING_PLAN, POWER_CUT_ORDER } from './config.js';
-import { drawEvent } from './events.js';
+import { drawEvent, knownEvent } from './events.js';
 import { archivedSun } from './data/donki.js';
 
 const clamp = (n) => Math.max(0, Math.min(RULES.meterMax, n));
@@ -24,11 +24,21 @@ export function carryOverPlan(previousPlan, available) {
   return plan;
 }
 
+// How long a message takes between Earth and this base, for one mission.
+// Moon: about 1.3 seconds. Mars: a whole number of minutes from 3 to 22.
+export function pickMessageDelay(site, rng = Math.random) {
+  const d = site.messageDelay;
+  if (d.minMinutes === undefined) return { minutes: null, text: d.text };
+  const minutes = d.minMinutes + Math.floor(rng() * (d.maxMinutes - d.minMinutes + 1));
+  return { minutes, text: `${minutes} minutes` };
+}
+
 // sun = flare data from data/donki.js (LIVE or ARCHIVED). Archived by default.
-export function newGame(siteId = 'moon', baseName = 'Base', sun = archivedSun()) {
+export function newGame(siteId = 'moon', baseName = 'Base', sun = archivedSun(), rng = Math.random) {
   return {
     siteId,
     sun,
+    messageDelay: pickMessageDelay(SITES[siteId], rng),
     baseName: baseName.trim() || 'Base',
     day: 1,
     meters: {
@@ -53,6 +63,11 @@ export function getSite(state) {
 export function startDay(state, rng = Math.random) {
   state.todayEvent = drawEvent(state.day, state.flareCount, getSite(state), rng, state.sun);
   return state.todayEvent;
+}
+
+// Today's event as the player knows it in the morning (surprises hidden).
+export function morningEvent(state) {
+  return knownEvent(state.todayEvent);
 }
 
 export function powerToday(site, event) {
@@ -144,6 +159,7 @@ export function runDay(state, plan) {
     before,
     after,
     details,
+    messageDelay: state.messageDelay,
     why: explainWhy(details, event, after),
   };
   state.history.push(report);
@@ -159,6 +175,12 @@ export function explainWhy(d, event, after) {
   }
   if (after.health <= 0) {
     return 'Too much radiation and too little food wore the crew down. A stronger shield and more food keep them healthy.';
+  }
+  if (event.flareClass && event.hidden) {
+    if (d.radiationThrough === 0) {
+      return `The flare warning arrived too late, but your shield was strong enough to block all ${d.radiationIn} radiation anyway. Smart thinking!`;
+    }
+    return `The flare warning arrived too late, so you could not get ready. Your shield blocked ${d.radiationBlocked} and ${d.radiationThrough} got through. On Mars, keeping some shield on every sol helps with surprises.`;
   }
   if (event.flareClass) {
     if (d.radiationThrough === 0) {

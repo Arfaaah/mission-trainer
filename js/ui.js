@@ -1,8 +1,8 @@
 // ui.js
 // All rendering. No game rules here: numbers come from game.js.
 
-import { RULES, SYSTEMS } from './config.js';
-import { getSite, powerToday, powerUsed, resolveDay } from './game.js';
+import { RULES, SYSTEMS, SITES } from './config.js';
+import { getSite, powerToday, powerUsed, resolveDay, morningEvent } from './game.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -124,7 +124,9 @@ function effectText(key, plan, event, site, d) {
 // button the player just pressed, so Tab and Enter keep working smoothly.
 export function renderBase(state, plan, focusSelector) {
   const site = getSite(state);
-  const event = state.todayEvent;
+  // Only show what Mission Control knows: a surprise flare stays hidden,
+  // and the forecast is worked out without it.
+  const event = morningEvent(state);
   const available = powerToday(site, event);
   const used = powerUsed(plan);
   const left = available - used;
@@ -141,7 +143,9 @@ export function renderBase(state, plan, focusSelector) {
     <p class="speaker">👩🏾‍🚀 CAPCOM Kemi says:</p>
     <p class="news-title">${event.emoji} ${esc(event.title)}</p>
     <p>${esc(event.news)}</p>
-    ${event.flare ? flareSourceHtml(event.flare) : ''}`;
+    ${event.flare ? flareSourceHtml(event.flare) : ''}
+    <p class="delay-note">📡 Messages from Earth take ${state.messageDelay.text} to reach your base.${
+      site.lateWarningChance > 0 ? ' Some flare warnings arrive too late, so you may get a surprise.' : ' Warnings always arrive in time.'}</p>`;
 
   const tokens = Array.from({ length: available }, (_, i) =>
     `<span class="token ${i < used ? 'token-used' : ''}" aria-hidden="true">⚡</span>`).join('');
@@ -202,6 +206,7 @@ export function showReport(report, state) {
   const isOver = state.status !== 'playing';
   $('report-body').innerHTML = `
     <h2 id="report-title" tabindex="-1">${report.dayName} ${report.day} report</h2>
+    ${report.event.hidden ? `<p class="surprise">😮 Surprise! The warning about this flare arrived too late. Messages from Earth take ${report.messageDelay.text} to reach Mars, and the flare got here first.</p>` : ''}
     <p class="news-title">${report.event.emoji} ${esc(report.event.title)}</p>
     ${report.event.flare ? flareSourceHtml(report.event.flare) : ''}
     <table class="report-table">
@@ -209,7 +214,8 @@ export function showReport(report, state) {
       <tbody>${rows}</tbody>
     </table>
     <ul class="report-lines">${lines.map((l) => `<li>${l}</li>`).join('')}</ul>
-    <p class="why"><strong>Why?</strong> ${esc(report.why)}</p>`;
+    <p class="why"><strong>Why?</strong> ${esc(report.why)}</p>
+    ${report.messageDelay.minutes !== null ? `<p class="delay-note">📡 Your report reached Earth in ${report.messageDelay.text}.</p>` : ''}`;
   $('report-next').textContent = isOver ? 'See mission results' : `Start ${report.dayName} ${report.day + 1}`;
 
   dialog.showModal();
@@ -220,13 +226,14 @@ export function renderResults(state) {
   const site = getSite(state);
   const m = state.meters;
   const daysDone = state.history.length;
+  const days = `${RULES.days} ${site.dayName.toLowerCase()}s`;
   let headline;
   let message;
   if (state.status === 'won') {
     headline = '🎉 Mission complete!';
     message = m.science >= RULES.scienceGoal
-      ? `Your crew lived on the ${site.name} for ${RULES.days} days and reached the science goal. Amazing work, Commander!`
-      : `Your crew lived on the ${site.name} for ${RULES.days} days. Next time, try to reach ${RULES.scienceGoal} science too.`;
+      ? `Your crew lived ${site.onPlace} for ${days} and reached the science goal. Amazing work, Commander!`
+      : `Your crew lived ${site.onPlace} for ${days}. Next time, try to reach ${RULES.scienceGoal} science too.`;
   } else {
     headline = '🚀 The crew flew home safely';
     const cause = state.endReason === 'air' ? 'The air ran out' : 'The crew got too sick';
@@ -239,4 +246,35 @@ export function renderResults(state) {
     <div class="meters">${METERS.map((mt) => meterHtml(mt, m[mt.key])).join('')}</div>
     <p>Science: <strong>${m.science}</strong> of ${RULES.scienceGoal} goal.</p>
     <p>${site.dayName}s completed: <strong>${daysDone}</strong> of ${RULES.days}.</p>`;
+
+  const other = SITES[site.id === 'moon' ? 'mars' : 'moon'];
+  $('btn-other-base').textContent = `Try the other base: ${other.emoji} ${other.name}`;
+  $('btn-other-base').dataset.site = other.id;
+}
+
+// Screen 2: the two base cards, built from the numbers in SITES.
+export function renderChooseBase() {
+  $('base-cards').innerHTML = Object.values(SITES).map((s) => `
+    <button type="button" class="base-card" data-site="${s.id}">
+      <span class="base-card-title">${s.emoji} ${s.name}</span>
+      <span class="base-card-place">${s.place}</span>
+      <span>⚡ Power: <strong>${s.dailyPower}</strong> each ${s.dayName.toLowerCase()}. ${s.powerReason}</span>
+      <span>☢️ Radiation: <strong>${s.baseRadiation}</strong> each ${s.dayName.toLowerCase()}. ${s.radiationReason}</span>
+      <span>📡 Messages from Earth take <strong>${s.messageDelay.text ?? `${s.messageDelay.minMinutes} to ${s.messageDelay.maxMinutes} minutes`}</strong>. ${
+        s.lateWarningChance > 0 ? 'Half of the flare warnings arrive too late!' : 'Flare warnings always arrive in time.'}</span>
+      <span>${s.badPowerEvent.emoji} ${s.badPowerEvent.title} can cut your power.</span>
+      ${s.dayLength ? `<span>🕐 A day on Mars is called a <strong>sol</strong>. It lasts ${s.dayLength}.</span>` : ''}
+    </button>`).join('');
+}
+
+// Screen 3: CAPCOM Kemi's briefing for the chosen base.
+export function renderBriefing(site) {
+  const last = site.lateWarningChance > 0
+    ? `Messages from Earth take minutes to reach Mars, so sometimes you must decide on your own. Keep your crew safe and try to reach ${RULES.scienceGoal} science!`
+    : `Keep your crew safe and try to reach ${RULES.scienceGoal} science. Good luck!`;
+  $('briefing-lines').innerHTML = `
+    <p>Welcome, Commander! You are in charge of a base ${site.onPlace} for ${RULES.days} ${site.dayName.toLowerCase()}s.</p>
+    <p>Each ${site.dayName.toLowerCase()} you get a little power. Split it between air, food, the radiation shield and science.</p>
+    <p>${last}</p>`;
+  $('base-name').value = `${site.name} Base One`;
 }

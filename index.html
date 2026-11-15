@@ -11,9 +11,16 @@
     <!-- 1. Title -->
     <section id="screen-title" class="screen">
       <h1 tabindex="-1">🚀 Junior Astronaut Mission Trainer</h1>
-      <p class="lead">Run a base on the Moon for 10 days. Keep your crew safe and do real science!</p>
+      <p class="lead">Run a base on the Moon or Mars for 10 days. Keep your crew safe and do real science!</p>
       <div id="sun-panel" class="card" aria-live="polite"></div>
       <button type="button" id="btn-play" class="big">Play</button>
+    </section>
+
+    <!-- 2. Choose your base -->
+    <section id="screen-choose" class="screen" hidden>
+      <h2 tabindex="-1">Choose your base</h2>
+      <div id="base-cards" class="base-cards"></div>
+      <button type="button" id="btn-choose-back">Back</button>
     </section>
 
     <!-- 3. Mission briefing -->
@@ -21,13 +28,11 @@
       <h2 tabindex="-1">Mission briefing</h2>
       <div class="card">
         <p class="speaker">👩🏾‍🚀 CAPCOM Kemi says:</p>
-        <p>Welcome, Commander! You are in charge of a base on the Moon for 10 days.</p>
-        <p>Each day you get a little power. Split it between air, food, the radiation shield and science.</p>
-        <p>Keep your crew safe and try to reach 40 science. Good luck!</p>
+        <div id="briefing-lines"></div>
       </div>
       <form id="briefing-form">
         <label for="base-name">Name your base:</label>
-        <input id="base-name" type="text" maxlength="20" value="Moon Base One" autocomplete="off">
+        <input id="base-name" type="text" maxlength="20" autocomplete="off">
         <button type="submit" class="big">Start mission</button>
       </form>
     </section>
@@ -49,6 +54,7 @@
       <h2 id="results-title" tabindex="-1"></h2>
       <div id="results-body"></div>
       <button type="button" id="btn-again" class="big">Play again</button>
+      <button type="button" id="btn-other-base" class="big secondary">Try the other base</button>
       <button type="button" id="btn-title">Back to title</button>
     </section>
   </main>
