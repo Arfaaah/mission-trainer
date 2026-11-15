@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junior Astronaut Mission Trainer</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <main>
+    <!-- 1. Title -->
+    <section id="screen-title" class="screen">
+      <h1 tabindex="-1">🚀 Junior Astronaut Mission Trainer</h1>
+      <p class="lead">Run a base on the Moon for 10 days. Keep your crew safe and do real science!</p>
+      <button type="button" id="btn-play" class="big">Play</button>
+    </section>
+
+    <!-- 3. Mission briefing -->
+    <section id="screen-briefing" class="screen" hidden>
+      <h2 tabindex="-1">Mission briefing</h2>
+      <div class="card">
+        <p class="speaker">👩🏾‍🚀 CAPCOM Kemi says:</p>
+        <p>Welcome, Commander! You are in charge of a base on the Moon for 10 days.</p>
+        <p>Each day you get a little power. Split it between air, food, the radiation shield and science.</p>
+        <p>Keep your crew safe and try to reach 40 science. Good luck!</p>
+      </div>
+      <form id="briefing-form">
+        <label for="base-name">Name your base:</label>
+        <input id="base-name" type="text" maxlength="20" value="Moon Base One" autocomplete="off">
+        <button type="submit" class="big">Start mission</button>
+      </form>
+    </section>
+
+    <!-- 4. Daily base screen -->
+    <section id="screen-base" class="screen" hidden>
+      <h2 id="base-title" tabindex="-1"></h2>
+      <div id="meters" class="meters"></div>
+      <div id="news" class="card news" aria-live="polite"></div>
+      <h3>Power plan</h3>
+      <div id="power" class="card"></div>
+      <div id="systems"></div>
+      <p id="waste-warning" role="status"></p>
+      <button type="button" id="btn-run" class="big">Run the day ▶</button>
+    </section>
+
+    <!-- 6. Mission results -->
+    <section id="screen-results" class="screen" hidden>
+      <h2 id="results-title" tabindex="-1"></h2>
+      <div id="results-body"></div>
+      <button type="button" id="btn-again" class="big">Play again</button>
+      <button type="button" id="btn-title">Back to title</button>
+    </section>
+  </main>
+
+  <!-- 5. Day report popup -->
+  <dialog id="report" aria-labelledby="report-title">
+    <div id="report-body"></div>
+    <button type="button" id="report-next" class="big">Next</button>
+  </dialog>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
