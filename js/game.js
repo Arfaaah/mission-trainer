@@ -2,13 +2,25 @@
 // Game state, daily resolution, win and lose logic.
 // No DOM code here, so these rules can be tested in Node.
 
-import { RULES, SITES, SYSTEMS } from './config.js';
+import { RULES, SITES, SYSTEMS, STARTING_PLAN, POWER_CUT_ORDER } from './config.js';
 import { drawEvent } from './events.js';
 
 const clamp = (n) => Math.max(0, Math.min(RULES.meterMax, n));
 
 export function emptyPlan() {
   return { lifeSupport: 0, greenhouse: 0, shield: 0, science: 0 };
+}
+
+// Start today with yesterday's plan (or the day 1 plan). If it needs more
+// power than today has, remove power in POWER_CUT_ORDER until it fits.
+export function carryOverPlan(previousPlan, available) {
+  const plan = { ...(previousPlan || STARTING_PLAN) };
+  for (const key of POWER_CUT_ORDER) {
+    const extra = powerUsed(plan) - available;
+    if (extra <= 0) break;
+    plan[key] = Math.max(0, plan[key] - extra);
+  }
+  return plan;
 }
 
 export function newGame(siteId = 'moon', baseName = 'Base') {

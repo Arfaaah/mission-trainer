@@ -1,7 +1,7 @@
 // main.js
 // Screen switching and event wiring. Connects buttons to game.js and ui.js.
 
-import { getSite, newGame, startDay, emptyPlan, runDay, isValidPlan, powerToday } from './game.js';
+import { getSite, newGame, startDay, emptyPlan, runDay, isValidPlan, powerToday, carryOverPlan } from './game.js';
 import { showScreen, renderBase, showReport, renderResults } from './ui.js';
 
 let state = null;
@@ -11,7 +11,9 @@ const $ = (id) => document.getElementById(id);
 
 function beginDay() {
   startDay(state);
-  plan = emptyPlan();
+  // Day 1 uses the starting plan; later days copy yesterday's plan.
+  const yesterday = state.history.at(-1);
+  plan = carryOverPlan(yesterday ? yesterday.plan : null, powerToday(getSite(state), state.todayEvent));
   renderBase(state, plan);
   showScreen('screen-base');
 }

@@ -44,6 +44,13 @@ export const FLARE_RADIATION = { X: 30, M: 18, C: 10 };
 // The four systems the player can power, in the order they are shown.
 export const SYSTEMS = ['lifeSupport', 'greenhouse', 'shield', 'science'];
 
+// The power plan already filled in on day 1.
+export const STARTING_PLAN = { lifeSupport: 3, greenhouse: 2, shield: 1, science: 0 };
+
+// If today has less power than yesterday's plan, take power away
+// from systems in this order until the plan fits.
+export const POWER_CUT_ORDER = ['science', 'shield', 'greenhouse', 'lifeSupport'];
+
 export const SITES = {
   moon: {
     id: 'moon',

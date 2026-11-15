@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { SITES, RULES } from '../js/config.js';
-import { newGame, startDay, runDay, resolveDay, emptyPlan } from '../js/game.js';
+import { newGame, startDay, runDay, resolveDay, emptyPlan, carryOverPlan } from '../js/game.js';
 import { drawEvent, flareChance, makeFlareEvent } from '../js/events.js';
 
 const moon = SITES.moon;
@@ -82,4 +82,24 @@ test('a full 10 day mission with a sensible plan is won', () => {
   }
   assert.equal(state.status, 'won');
   assert.equal(state.history.length, 10);
+});
+
+test('day 1 starts with life support 3, greenhouse 2, shield 1, science 0', () => {
+  assert.deepEqual(carryOverPlan(null, 10),
+    { lifeSupport: 3, greenhouse: 2, shield: 1, science: 0 });
+});
+
+test('yesterday\'s plan is kept when it fits', () => {
+  const p = plan({ lifeSupport: 3, greenhouse: 2, shield: 2, science: 3 });
+  assert.deepEqual(carryOverPlan(p, 10), p);
+});
+
+test('less power cuts science, then shield, then food, then life support', () => {
+  const p = plan({ lifeSupport: 3, greenhouse: 2, shield: 2, science: 3 }); // uses 10
+  // 6 power: science 3 -> 0, shield 2 -> 1
+  assert.deepEqual(carryOverPlan(p, 6),
+    { lifeSupport: 3, greenhouse: 2, shield: 1, science: 0 });
+  // 2 power: science, shield and greenhouse all gone, life support 3 -> 2
+  assert.deepEqual(carryOverPlan(p, 2),
+    { lifeSupport: 2, greenhouse: 0, shield: 0, science: 0 });
 });
