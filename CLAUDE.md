@@ -44,7 +44,7 @@ Keep game rules out of ui.js and DOM code out of game.js so the rules can be tes
 ### 4.1 Screens
 
 1. **Title**: game name, "Today's real Sun" panel (DONKI result), Play button, Space Words button, Data Sources button.
-2. **Choose your base**: Moon (Shackleton crater rim, south pole) or Mars (Jezero crater). Each card shows power, radiation and message delay in kid language. Choose difficulty: Cadet (ages 7 to 9) or Commander (ages 10 to 12).
+2. **Choose your base**: Moon (Peak Near Shackleton, one of NASA's Artemis III candidate landing regions near the Moon's south pole) or Mars (Jezero crater). Each card shows power, radiation and message delay in kid language. Choose difficulty: Cadet (ages 7 to 9) or Commander (ages 10 to 12).
 3. **Mission briefing**: Mission Control character "CAPCOM Kemi" explains the goal in 3 short lines. Player names their base.
 4. **Daily base screen** (main loop, see 4.3).
 5. **Day report** (popup after each day).

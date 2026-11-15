@@ -86,8 +86,8 @@ Every piece of flare data on screen carries a **LIVE** or **ARCHIVED** tag and i
 | The Moon has only a very thin exosphere that is not breathable, so it does almost nothing to block radiation. | NASA, [Moon Facts](https://science.nasa.gov/moon/facts/) |
 | A radio message takes about 1.3 seconds to travel from Earth to the Moon. | NASA, [Basics of Space Flight, Chapter 1](https://science.nasa.gov/learn/basics-of-space-flight/chapter1-1/) (light time table: an Earth to Moon round trip takes about 3 seconds) |
 | The Mars base is in Jezero crater, where NASA's Perseverance rover landed. | NASA, [Mars 2020 Perseverance](https://science.nasa.gov/mission/mars-2020-perseverance/) |
-| A message between Earth and Mars takes 3 to 22 minutes, depending on where the two planets are in their orbits. | **Source still to be confirmed by the team** |
-| The Moon base is on the rim of Shackleton crater, near the Moon's south pole. | **Source still to be confirmed by the team** |
+| A message between Earth and Mars takes 3 to 22 minutes, depending on where the two planets are in their orbits. | NASA Langley Research Center, McBrayer, Chai and Judd (2022), [Communication Delays, Disruptions, and Blackouts for Crewed Mars Missions](https://ntrs.nasa.gov/api/citations/20220013418/downloads/ASCEND-Communication%20Delays%2C%20Disruptions%2C%20and%20Blackouts%20for%20Crewed%20Mars%20Missions.pdf): the one-way delay reaches up to 22 minutes. The 3 minute minimum comes from the closest distance between Earth and Mars, about 55 million km, divided by the speed of light (about 300,000 km each second): 55,000,000 ÷ 300,000 = about 183 seconds, or about 3 minutes. |
+| The Moon base is at Peak Near Shackleton, one of NASA's Artemis III candidate landing regions near the Moon's south pole. | NASA news release 22-089 (19 August 2022), [NASA Identifies Candidate Regions for Landing Next Americans on Moon](https://www.nasa.gov/news-release/nasa-identifies-candidate-regions-for-landing-next-americans-on-Moon/) |
 
 **Please note:**
 - The meter numbers in the game (for example "6 radiation a day") are simple game points, not real radiation doses.

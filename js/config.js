@@ -83,7 +83,8 @@ export const SITES = {
     id: 'moon',
     name: 'Moon',
     onPlace: 'on the Moon',
-    place: 'Shackleton crater rim, near the south pole',
+    // Source: NASA release 22-089 (19 Aug 2022), Artemis III candidate landing regions.
+    place: "Peak Near Shackleton, one of NASA's Artemis III candidate landing regions near the Moon's south pole",
     emoji: '🌙',
     powerReason: 'Sunlight is strong on the crater rim.',
     radiationReason: 'The Moon has no air to block radiation.',
