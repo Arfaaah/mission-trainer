@@ -29,6 +29,54 @@ const SYSTEM_INFO = {
 
 const signed = (n) => (n > 0 ? `+${n}` : `${n}`);
 
+// "2025-03-05T11:50Z" -> "5 March 2025"
+function niceDate(isoText) {
+  const d = new Date(isoText);
+  if (Number.isNaN(d.getTime())) return 'an unknown date';
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+}
+
+// The LIVE / ARCHIVED label. Uses words and an icon, not just colour.
+function tagHtml(tag) {
+  return tag === 'LIVE'
+    ? '<span class="tag tag-live">📡 LIVE</span>'
+    : '<span class="tag tag-archived">🗄️ ARCHIVED</span>';
+}
+
+// One line under a flare event saying where the flare came from.
+function flareSourceHtml(flare) {
+  const when = flare.tag === 'LIVE'
+    ? `This flare really happened on ${niceDate(flare.peakTime)}.`
+    : `This is a real flare from ${niceDate(flare.peakTime)}, saved inside the game.`;
+  return `<p class="data-source">${tagHtml(flare.tag)} ${when} Source: ${esc(flare.source)}.</p>`;
+}
+
+// Title screen "Today's real Sun" panel. sun = null while still loading.
+export function renderSunPanel(sun) {
+  const panel = $('sun-panel');
+  if (!sun) {
+    panel.innerHTML = `<h2 class="panel-title">☀️ Today's real Sun</h2>
+      <p>Checking the Sun with NASA…</p>`;
+    return;
+  }
+  const cCount = sun.flares.filter((f) => f.classType.startsWith('C')).length;
+  const period = `${niceDate(sun.windowStart)} to ${niceDate(sun.windowEnd)}`;
+  const intro = sun.tag === 'LIVE'
+    ? `In the last 30 days the Sun made <strong>${sun.flares.length}</strong> flares:`
+    : `We could not reach NASA just now, so the game is using real flares saved from ${period}. In those 30 days the Sun made <strong>${sun.flares.length}</strong> flares:`;
+  panel.innerHTML = `
+    <h2 class="panel-title">☀️ Today's real Sun ${tagHtml(sun.tag)}</h2>
+    <p>A <strong>solar flare</strong> is a sudden flash of energy from the Sun.</p>
+    <p>${intro}</p>
+    <ul class="flare-counts">
+      <li>💥 ${sun.xCount} huge (X class)</li>
+      <li>🔥 ${sun.mCount} medium (M class)</li>
+      <li>✨ ${cCount} small (C class)</li>
+    </ul>
+    <p>So on your mission there is a <strong>${Math.round(sun.chance * 100)}%</strong> chance of a flare each day.</p>
+    <p class="data-source">Source: ${esc(sun.source)}, ${period}.</p>`;
+}
+
 export function showScreen(id) {
   document.querySelectorAll('.screen').forEach((s) => { s.hidden = s.id !== id; });
   const heading = $(id).querySelector('h1, h2');
@@ -92,7 +140,8 @@ export function renderBase(state, plan, focusSelector) {
   $('news').innerHTML = `
     <p class="speaker">👩🏾‍🚀 CAPCOM Kemi says:</p>
     <p class="news-title">${event.emoji} ${esc(event.title)}</p>
-    <p>${esc(event.news)}</p>`;
+    <p>${esc(event.news)}</p>
+    ${event.flare ? flareSourceHtml(event.flare) : ''}`;
 
   const tokens = Array.from({ length: available }, (_, i) =>
     `<span class="token ${i < used ? 'token-used' : ''}" aria-hidden="true">⚡</span>`).join('');
@@ -154,6 +203,7 @@ export function showReport(report, state) {
   $('report-body').innerHTML = `
     <h2 id="report-title" tabindex="-1">${report.dayName} ${report.day} report</h2>
     <p class="news-title">${report.event.emoji} ${esc(report.event.title)}</p>
+    ${report.event.flare ? flareSourceHtml(report.event.flare) : ''}
     <table class="report-table">
       <thead><tr><th scope="col">Meter</th><th scope="col">Before</th><th></th><th scope="col">After</th></tr></thead>
       <tbody>${rows}</tbody>

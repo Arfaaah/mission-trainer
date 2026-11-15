@@ -2,12 +2,29 @@
 // Screen switching and event wiring. Connects buttons to game.js and ui.js.
 
 import { getSite, newGame, startDay, emptyPlan, runDay, isValidPlan, powerToday, carryOverPlan } from './game.js';
-import { showScreen, renderBase, showReport, renderResults } from './ui.js';
+import { showScreen, renderBase, showReport, renderResults, renderSunPanel } from './ui.js';
+import { loadSun, archivedSun } from './data/donki.js';
 
 let state = null;
 let plan = emptyPlan();
+let sun = null; // solar flare data: LIVE from NASA, or ARCHIVED
 
 const $ = (id) => document.getElementById(id);
+
+// Load real solar flares when the page opens.
+// Add ?archived to the address to skip NASA and test the archived data.
+async function startSun() {
+  renderSunPanel(null);
+  if (new URLSearchParams(location.search).has('archived')) {
+    sun = archivedSun('?archived is in the address, so NASA was not asked');
+  } else {
+    sun = await loadSun();
+  }
+  if (sun.reason) console.warn(`Using ARCHIVED solar flares. Reason: ${sun.reason}`);
+  else console.info(`Using LIVE solar flares from ${sun.source}: ${sun.flares.length} flares from ${sun.windowStart} to ${sun.windowEnd}`);
+  renderSunPanel(sun);
+}
+startSun();
 
 function beginDay() {
   startDay(state);
@@ -32,7 +49,8 @@ $('btn-play').addEventListener('click', () => showScreen('screen-briefing'));
 // Briefing screen
 $('briefing-form').addEventListener('submit', (e) => {
   e.preventDefault();
-  state = newGame('moon', $('base-name').value);
+  // If NASA has not answered yet, play with archived flares.
+  state = newGame('moon', $('base-name').value, sun ?? archivedSun('NASA had not answered yet'));
   beginDay();
 });
 

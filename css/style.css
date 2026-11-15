@@ -156,6 +156,23 @@ input[type="text"] {
   .stepper { justify-content: center; }
 }
 
+/* LIVE / ARCHIVED data tags */
+.tag {
+  display: inline-block;
+  padding: 1px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+  border: 2px solid;
+}
+.tag-live { color: var(--good); border-color: var(--good); }
+.tag-archived { color: var(--muted); border-color: var(--muted); }
+.data-source { font-size: 0.85rem; color: var(--muted); }
+.panel-title { font-size: 1.15rem; margin: 0.2em 0 0.4em; }
+.flare-counts { margin: 0.3em 0; padding-left: 1.1em; }
+
 .warning { color: var(--warn); font-weight: bold; }
 .ok { color: var(--good); font-weight: bold; }
 

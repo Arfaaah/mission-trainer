@@ -110,12 +110,14 @@ If no flare has happened by day 6, force one so every player meets the core less
 
 ### 5.1 DONKI solar flares (LIVE)
 
-- Endpoint: `https://api.nasa.gov/DONKI/FLR?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY`
-- Fetch the last 30 days on page load, 8 second timeout.
+- Fetch the last 30 days on page load. Try these sources in order, with an 8 second timeout on each attempt:
+  1. CCMC (no key needed): `https://ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD`
+  2. api.nasa.gov (with the NASA key): `https://api.nasa.gov/DONKI/FLR?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&api_key=KEY`
+  3. If both fail: archived real flares in archive.js, tagged ARCHIVED.
+- Show the source on screen as "NASA DONKI (CCMC)" or "NASA DONKI (api.nasa.gov)", depending on which one answered.
 - Use field `classType` (for example "M1.2") and `peakTime`.
 - Flare chance per day = 0.10 + 0.01 x (number of M flares) + 0.04 x (number of X flares), clamped between 0.10 and 0.35.
-- In-game flares pick a real flare from that list and show its class and date.
-- Fallback: archived real flares in archive.js, tagged ARCHIVED.
+- In-game flares pick a real flare from that list and show its class, date, LIVE or ARCHIVED tag and source.
 - Optional: also fetch geomagnetic storms `https://api.nasa.gov/DONKI/GST?...` to show "Earth's last space weather storm" on the title screen.
 
 ### 5.2 RadLab radiation (ARCHIVED)

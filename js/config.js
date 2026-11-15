@@ -2,8 +2,20 @@
 // Every number that controls the game lives here, so you can tune the game
 // without hunting through the code.
 
-// Step 2 will use this key for live NASA DONKI data. Not used yet.
+// NASA API key for live DONKI data. DEMO_KEY is only for building the game:
+// it allows very few calls per hour. Swap in a free key from
+// https://api.nasa.gov before the final version.
 export const NASA_API_KEY = 'DEMO_KEY';
+
+// DONKI solar flare list (section 5.1 of CLAUDE.md).
+// The game tries these in order. The first one that answers is used.
+// If they all fail, it uses the archived flares in data/archive.js.
+export const DONKI_SOURCES = [
+  { name: 'NASA DONKI (CCMC)', url: 'https://ccmc.gsfc.nasa.gov/DONKI/WS/get/FLR', needsKey: false },
+  { name: 'NASA DONKI (api.nasa.gov)', url: 'https://api.nasa.gov/DONKI/FLR', needsKey: true },
+];
+export const DONKI_DAYS_BACK = 30;     // look at the last 30 days of flares
+export const DONKI_TIMEOUT_MS = 8000;  // give up on each source after 8 seconds
 
 export const RULES = {
   days: 10,            // mission length

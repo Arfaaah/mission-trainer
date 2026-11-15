@@ -3,13 +3,7 @@
 // No DOM code here.
 
 import { RULES, FLARE_RADIATION } from './config.js';
-
-// STEP 1 PLACEHOLDER: made-up flare classes so the game can run.
-// Step 2 replaces this with real flares from NASA DONKI (LIVE) or archive.js
-// (ARCHIVED). These are not real data, so the game does not show a date for them.
-const PLACEHOLDER_FLARES = ['C3.1', 'C8.4', 'M1.2', 'M2.5', 'X1.1'];
-const PLACEHOLDER_M_COUNT = 3;
-const PLACEHOLDER_X_COUNT = 1;
+import { ARCHIVED_FLARES } from './data/archive.js';
 
 // Flare chance per day = 0.10 + 0.01 x M flares + 0.04 x X flares,
 // kept between 0.10 and 0.35.
@@ -38,10 +32,13 @@ function baseEvent() {
     airLost: 0,
     scienceMultiplier: 1,
     flareClass: null,
+    flare: null,       // the real flare behind this event: { classType, peakTime, tag, source }
   };
 }
 
-export function makeFlareEvent(classType) {
+// flare = { classType, peakTime, tag: 'LIVE' | 'ARCHIVED', source }
+export function makeFlareEvent(flare) {
+  const { classType } = flare;
   return {
     ...baseEvent(),
     id: 'flare',
@@ -50,8 +47,14 @@ export function makeFlareEvent(classType) {
     news: `Warning! The Sun just sent out a big burst called a solar flare (class ${classType}). It will add ${flareRadiation(classType)} extra radiation today. Radiation is invisible energy that can hurt the crew. The shield can block it.`,
     extraRadiation: flareRadiation(classType),
     flareClass: classType,
+    flare: { ...flare },
   };
 }
+
+// Archived flares with their tag, used when the live list has no flares in it.
+const ARCHIVED_WITH_TAGS = ARCHIVED_FLARES.flares.map((f) => ({
+  ...f, tag: 'ARCHIVED', source: ARCHIVED_FLARES.source,
+}));
 
 function makeBadPowerEvent(site) {
   return {
@@ -116,18 +119,21 @@ function pickWeighted(list, rng) {
 //   flareCount how many flares have happened so far this mission
 //   site       an entry from SITES
 //   rng        a function returning 0 to 1 (Math.random by default; tests pass their own)
-export function drawEvent(day, flareCount, site, rng = Math.random) {
+//   sun        { chance, flares } from data/donki.js (LIVE or ARCHIVED)
+export function drawEvent(day, flareCount, site, rng = Math.random, sun = null) {
   if (day === 1) return baseEvent(); // day 1 is always calm
 
-  const pickFlare = () =>
-    PLACEHOLDER_FLARES[Math.floor(rng() * PLACEHOLDER_FLARES.length)];
+  // Pick a real flare. If the live list is empty (a quiet Sun), use an archived one.
+  const pool = sun && sun.flares.length > 0 ? sun.flares : ARCHIVED_WITH_TAGS;
+  const pickFlare = () => pool[Math.floor(rng() * pool.length)];
+  const chance = sun ? sun.chance : RULES.flareChanceMin;
 
   // Make sure every player meets a flare.
   if (day >= RULES.forceFlareOnDay && flareCount === 0) {
     return makeFlareEvent(pickFlare());
   }
 
-  if (rng() < flareChance(PLACEHOLDER_M_COUNT, PLACEHOLDER_X_COUNT)) {
+  if (rng() < chance) {
     return makeFlareEvent(pickFlare());
   }
   if (rng() < RULES.badPowerChance) {

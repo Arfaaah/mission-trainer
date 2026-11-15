@@ -17,7 +17,7 @@ test('air math: 3 life support units make 18, crew breathes 15', () => {
 });
 
 test('shield blocks 5 radiation per power unit', () => {
-  const flare = makeFlareEvent('M1.0'); // 18 extra radiation
+  const flare = makeFlareEvent({ classType: 'M1.0', peakTime: null, tag: 'ARCHIVED', source: 'test' }); // 18 extra radiation
   const meters = { air: 70, food: 70, health: 100, science: 0 };
   // Moon base radiation 6 + flare 18 = 24. Shield 2 blocks 10, so 14 gets through.
   const r = resolveDay(meters, plan({ shield: 2 }), flare, moon);

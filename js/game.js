@@ -4,6 +4,7 @@
 
 import { RULES, SITES, SYSTEMS, STARTING_PLAN, POWER_CUT_ORDER } from './config.js';
 import { drawEvent } from './events.js';
+import { archivedSun } from './data/donki.js';
 
 const clamp = (n) => Math.max(0, Math.min(RULES.meterMax, n));
 
@@ -23,9 +24,11 @@ export function carryOverPlan(previousPlan, available) {
   return plan;
 }
 
-export function newGame(siteId = 'moon', baseName = 'Base') {
+// sun = flare data from data/donki.js (LIVE or ARCHIVED). Archived by default.
+export function newGame(siteId = 'moon', baseName = 'Base', sun = archivedSun()) {
   return {
     siteId,
+    sun,
     baseName: baseName.trim() || 'Base',
     day: 1,
     meters: {
@@ -48,7 +51,7 @@ export function getSite(state) {
 
 // Draw the event for the current day. Call once at the start of each day.
 export function startDay(state, rng = Math.random) {
-  state.todayEvent = drawEvent(state.day, state.flareCount, getSite(state), rng);
+  state.todayEvent = drawEvent(state.day, state.flareCount, getSite(state), rng, state.sun);
   return state.todayEvent;
 }
 
